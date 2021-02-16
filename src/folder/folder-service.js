@@ -14,6 +14,14 @@ const FolderService = {
             .then(rows => {
                 return rows[0];
             });
+    },
+
+    getById(knex,id){
+        return knex 
+            .from('noteful_folder')
+            .select('*')
+            .where('id', id)
+            .first();
     }
 
 };

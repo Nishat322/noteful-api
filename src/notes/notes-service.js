@@ -14,6 +14,14 @@ const NotesService = {
             .then(rows => {
                 return rows[0];
             });
+    },
+
+    getById(knex, id){
+        return knex 
+            .from('noteful_notes')
+            .select('*')
+            .where('id', id)
+            .first();
     }
 
 };

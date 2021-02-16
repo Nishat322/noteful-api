@@ -45,7 +45,7 @@ describe('Notes Service Object', function(){
     after(() => db.destroy());
 
     context('Given \'noteful_notes\' has data', () => {
-        before(() => {
+        beforeEach(() => {
             return db   
                 .into('noteful_notes')
                 .insert(testNotes);

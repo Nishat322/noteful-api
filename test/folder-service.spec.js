@@ -38,7 +38,7 @@ describe('Folder Service Object', function(){
     after(() => db.destroy());
 
     context('Given \'noteful_folder\' has data', () => {
-        before(() => {
+        beforeEach(() => {
             return db   
                 .into('noteful_folder')
                 .insert(testFolder);
@@ -48,6 +48,19 @@ describe('Folder Service Object', function(){
             return FolderService.getAllFolders(db)
                 .then(actual => {
                     expect(actual).to.eql(testFolder);
+                });
+        });
+
+        it('getById() resolves a folder by id from \'noteful_folder\' table', () => {
+            const thirdId = 3;
+            const testThirdFolder = testFolder[thirdId - 1];
+
+            return FolderService.getById(db, thirdId)
+                .then(actual => {
+                    expect(actual).to.eql({
+                        id: 3,
+                        folder_name: testThirdFolder.folder_name
+                    });
                 });
         });
     });
