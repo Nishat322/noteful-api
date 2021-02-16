@@ -63,6 +63,31 @@ describe('Folder Service Object', function(){
                     });
                 });
         });
+
+        it('deleteFolder() removes a folder by folder from \'noteful_folder\'', () => {
+            const idToRemove = 3;
+
+            return FolderService.deleteFolder(db, idToRemove)
+                .then(() => FolderService.getAllFolders(db))
+                .then(allFolders => {
+                    [
+                        {
+                            id: 1,
+                            folder_name: 'First test folder'
+                        },
+                        {
+                            id: 2,
+                            folder_name: 'Second test folder'
+                        },
+                        {
+                            id: 3,
+                            folder_name: 'Third test folder'
+                        }
+                    ];
+                    const expected = testFolder.filter(folder => folder.id !== idToRemove);
+                    expect(allFolders).to.eql(expected);
+                });
+        });
     });
 
     context('Given \'noteful_folder\' has no data', () => {

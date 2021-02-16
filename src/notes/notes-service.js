@@ -22,6 +22,12 @@ const NotesService = {
             .select('*')
             .where('id', id)
             .first();
+    },
+
+    deleteNote(knex, id){
+        return knex('noteful_notes')
+            .where('id', id)
+            .delete();
     }
 
 };

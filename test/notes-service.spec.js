@@ -72,6 +72,32 @@ describe('Notes Service Object', function(){
                     });
                 });
         });
+
+        it('deleteNote() removes an article by id from \'noteful_notes\'', () => {
+            const idToRemove = 3;
+
+            return NotesService.deleteNote(db, idToRemove)
+                .then(() => NotesService.getAllNotes(db))
+                .then(allNotes => {
+                    [
+                        {
+                            id: 1,
+                            note_name: 'First test note',
+                            content: 'Test note content',
+                            date_published: new Date('2029-01-22T16:28:32.615Z'),
+                        },
+                        {
+                            id: 2,
+                            note_name: 'Second test note',
+                            content: 'Test note content',
+                            date_published: new Date('2100-05-22T16:28:32.615Z'),
+                
+                        },
+                    ];
+                    const expected = testNotes.filter(note => note.id !== idToRemove);
+                    expect(allNotes).to.eql(expected);
+                });  
+        });
     });
 
     context('Given \'noteful_notes\' has no data', () => {

@@ -16,12 +16,18 @@ const FolderService = {
             });
     },
 
-    getById(knex,id){
+    getById(knex, id){
         return knex 
             .from('noteful_folder')
             .select('*')
             .where('id', id)
             .first();
+    },
+
+    deleteFolder(knex, id){
+        return knex('noteful_folder')
+            .where('id', id)
+            .delete();
     }
 
 };
