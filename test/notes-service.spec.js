@@ -5,31 +5,12 @@ const { expect } = require('chai');
 const knex = require('knex');
 
 const NotesService = require('../src/notes/notes-service');
+const { makeNotesArray } = require('./notes.fixtures');
 
 
 describe('Notes Service Object', function(){
     let db;
-    let testNotes = [
-        {
-            id: 1,
-            note_name: 'First test note',
-            content: 'Test note content',
-            date_published: new Date('2029-01-22T16:28:32.615Z'),
-        },
-        {
-            id: 2,
-            note_name: 'Second test note',
-            content: 'Test note content',
-            date_published: new Date('2100-05-22T16:28:32.615Z'),
-
-        },
-        {
-            id: 3,
-            note_name: 'Third test note',
-            content: 'Test note content',
-            date_published: new Date('1919-12-22T16:28:32.615Z'),
-        }
-    ];
+    let testNotes = makeNotesArray();
 
     before(() => {
         db = knex({
@@ -53,8 +34,13 @@ describe('Notes Service Object', function(){
 
         it('getAllNotes() resoves all notes from \'noteful_notes\' table', () => {
             return NotesService.getAllNotes(db)
-                .then(actual => {
-                    expect(actual).to.eql(testNotes);
+                .then(notes => {
+                    expect(notes).to.eql(testNotes.map(note => ({
+                        id: note.id,
+                        note_name: note.note_name,
+                        content: note.content,
+                        date_published: new Date(note.date_published),
+                    })));
                 });
         });
 
@@ -68,7 +54,7 @@ describe('Notes Service Object', function(){
                         id: thirdId,
                         note_name: testThirdNote.note_name,
                         content: testThirdNote.content,
-                        date_published: testThirdNote.date_published
+                        date_published: new Date(testThirdNote.date_published)
                     });
                 });
         });
@@ -95,7 +81,10 @@ describe('Notes Service Object', function(){
                         },
                     ];
                     const expected = testNotes.filter(note => note.id !== idToRemove);
-                    expect(allNotes).to.eql(expected);
+                    expect(allNotes).to.eql(expected.map(notes => ({
+                        ... notes,
+                        date_published: new Date(notes.date_published)
+                    })));
                 });  
         });
 
