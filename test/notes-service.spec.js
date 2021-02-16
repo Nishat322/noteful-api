@@ -73,7 +73,7 @@ describe('Notes Service Object', function(){
                 });
         });
 
-        it('deleteNote() removes an article by id from \'noteful_notes\'', () => {
+        it('deleteNote() removes a note by id from \'noteful_notes\'', () => {
             const idToRemove = 3;
 
             return NotesService.deleteNote(db, idToRemove)
@@ -97,6 +97,26 @@ describe('Notes Service Object', function(){
                     const expected = testNotes.filter(note => note.id !== idToRemove);
                     expect(allNotes).to.eql(expected);
                 });  
+        });
+
+        it('updateNote() updates a note from \'noteful_notes\' table', () => {
+            const idToUpdate = 3;
+            const newNoteData = {
+                note_name: 'Updated Note Name',
+                content: 'Updated content',
+                date_published: new Date(),
+            };
+
+            return NotesService.updateNote(db, idToUpdate, newNoteData)
+                .then(() => NotesService.getById(db, idToUpdate))
+                .then(note => {
+                    expect(note).to.eql({
+                        id: idToUpdate,
+                        note_name: newNoteData.note_name,
+                        content: newNoteData.content,
+                        date_published: newNoteData.date_published
+                    });
+                });
         });
     });
 

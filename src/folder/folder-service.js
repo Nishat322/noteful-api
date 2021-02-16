@@ -28,8 +28,13 @@ const FolderService = {
         return knex('noteful_folder')
             .where('id', id)
             .delete();
-    }
+    },
 
+    updateFolder(knex, id, newFolderFields){
+        return knex('noteful_folder')
+            .where('id', id)
+            .update(newFolderFields);
+    }
 };
 
 module.exports = FolderService;

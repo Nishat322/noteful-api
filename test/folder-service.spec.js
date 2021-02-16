@@ -64,7 +64,7 @@ describe('Folder Service Object', function(){
                 });
         });
 
-        it('deleteFolder() removes a folder by folder from \'noteful_folder\'', () => {
+        it('deleteFolder() removes a folder by id from \'noteful_folder\'', () => {
             const idToRemove = 3;
 
             return FolderService.deleteFolder(db, idToRemove)
@@ -86,6 +86,22 @@ describe('Folder Service Object', function(){
                     ];
                     const expected = testFolder.filter(folder => folder.id !== idToRemove);
                     expect(allFolders).to.eql(expected);
+                });
+        });
+
+        it('updateFolder() updates a folder from \'noteful_folder\'', () => {
+            const idToUpdate = 3;
+            const newFolderData = {
+                folder_name: 'Updated Folder Name'
+            };
+
+            return FolderService.updateFolder(db, idToUpdate, newFolderData)
+                .then(() => FolderService.getById(db, idToUpdate))
+                .then(folder => {
+                    expect(folder).to.eql({
+                        id: idToUpdate,
+                        folder_name: newFolderData.folder_name
+                    });
                 });
         });
     });
