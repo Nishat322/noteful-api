@@ -25,6 +25,15 @@ function makeNotesArray(){
     ];
 }
 
+function makeMaliciousNote(){
+    return {
+            id: 911,
+            note_name: 'Naughty naughty very naughty <script>alert("xss");</script>',
+            content: 'Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.'
+        };
+}
+
 module.exports = {
-    makeNotesArray
+    makeNotesArray,
+    makeMaliciousNote
 };

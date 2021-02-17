@@ -5,9 +5,8 @@ const {expect} = require('chai');
 const knex = require('knex');
 const supertest = require('supertest');
 const app = require('../src/app');
-const notesRouter = require('../src/notes/notes-router');
 
-const {makeNotesArray} = require('./notes.fixtures');
+const {makeNotesArray, makeMaliciousNote} = require('./notes.fixtures');
 
 describe.only('Notes Endpoints', function(){
     let db; 
@@ -52,7 +51,7 @@ describe.only('Notes Endpoints', function(){
         });
     });
 
-    describe('GET /notes/:note_id', () => {
+    describe.only('GET /notes/:note_id', () => {
         context('Given there are not notes in the database', () => {
             it('responds with 404', () => {
                 const noteId = 123456;
@@ -81,9 +80,29 @@ describe.only('Notes Endpoints', function(){
                     .expect(200, expectedNote);
             });
         });
+
+        context('Given an xss attack article', () => {
+            const maliciousNote = makeMaliciousNote();
+
+            beforeEach('insert malicious article', () => {
+                return db   
+                    .into('noteful_notes')
+                    .insert(maliciousNote);
+            });
+
+            it('removes XSS attack content', () => {
+                return supertest(app)
+                    .get(`/notes/${maliciousNote.id}`)
+                    .expect(200)
+                    .expect(res =>{
+                        expect(res.body.note_name).to.eql('Naughty naughty very naughty &lt;script&gt;alert("xss");&lt;/script&gt;');
+                        expect(res.body.content).to.eql('Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.');
+                    });
+            });
+        });
     });
 
-    describe.only('POST /notes', () => {
+    describe('POST /notes', () => {
         it('creates an article, responding with 201 and the new note', function(){
             this.retries(3);
 
@@ -122,7 +141,7 @@ describe.only('Notes Endpoints', function(){
 
             it(`responds with 400 and an error when the ${field} is missing`, () => {
                 delete newNote[field];
-                
+
                 return supertest(app)
                     .post('/notes')
                     .send(newNote)

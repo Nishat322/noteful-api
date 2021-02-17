@@ -3,6 +3,7 @@
 'use strict';
 
 const express = require('express');
+const xss = require('xss');
 const NotesService = require('./notes-service');
 
 const notesRouter = express.Router();
@@ -55,7 +56,12 @@ notesRouter
                             .status(404)
                             .json({error: {message: 'Note doesn\'t exist'}});
                 }
-                res.json(note);
+                res.json({
+                    id: note.id,
+                    note_name: xss(note.note_name),
+                    content: xss(note.content),
+                    date_published: note.date_published
+                });
             })
             .catch(next);
     });
