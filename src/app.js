@@ -8,8 +8,8 @@ const helmet = require('helmet');
 
 const { NODE_ENV } = require('./config');
 const notesRouter = require('./notes/notes-router');
+const folderRouter = require('./folder/folder-router');
 const errorHandler = require('./errorHandler');
-
 
 const app = express();
 const jsonParser = express.json();
@@ -27,6 +27,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api', notesRouter);
+app.use('/api', folderRouter);
 app.use(errorHandler);
     
 module.exports = app;

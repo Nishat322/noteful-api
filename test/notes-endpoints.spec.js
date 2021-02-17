@@ -7,6 +7,7 @@ const supertest = require('supertest');
 const app = require('../src/app');
 
 const {makeNotesArray, makeMaliciousNote} = require('./notes.fixtures');
+const {makeFolderArray} = require('./folder.fixtures');
 
 describe.only('Notes Endpoints', function(){
     let db; 
@@ -21,9 +22,9 @@ describe.only('Notes Endpoints', function(){
 
     after('disconnect from db', () => db.destroy());
 
-    before('clean up table', () => db('noteful_notes').truncate());
+    before('clean up table', () => db.raw('TRUNCATE noteful_notes, noteful_folder RESTART IDENTITY CASCADE'));
 
-    afterEach('clean up table', () => db('noteful_notes').truncate());
+    afterEach('clean up table', () => db.raw('TRUNCATE noteful_notes, noteful_folder RESTART IDENTITY CASCADE'));
 
     describe('GET /api/notes', () => {
         context('Given no notes in the database', () => {
@@ -36,11 +37,17 @@ describe.only('Notes Endpoints', function(){
 
         context('Given there are notes in the database', () => {
             const testNotes = makeNotesArray(); 
+            const testFolder = makeFolderArray();
     
             beforeEach('insert notes', () => {
                 return db
-                    .into('noteful_notes')
-                    .insert(testNotes);
+                    .into('noteful_folder')
+                    .insert(testFolder)
+                    .then(() => {
+                        return db 
+                        .into('noteful_notes')
+                        .insert(testNotes);
+                    });
             });
 
             it('responds with 200 and all of the notes', () => {
@@ -64,11 +71,17 @@ describe.only('Notes Endpoints', function(){
 
         context('Given there are notes in the database', () => {
             const testNotes = makeNotesArray();
+            const testFolder = makeFolderArray();
 
             beforeEach('insert notes', () => {
                 return db
-                    .into('noteful_notes')
-                    .insert(testNotes);
+                    .into('noteful_folder')
+                    .insert(testFolder)
+                    .then(() => {
+                        return db 
+                        .into('noteful_notes')
+                        .insert(testNotes);
+                    });
             });
 
             it('GET /api/notes/:note_id responds with 200 and the specified note', () => {
@@ -154,11 +167,17 @@ describe.only('Notes Endpoints', function(){
     describe('DELETE /api/notes/:note_id', () => {
         context('Given there are notes in the database', () => {
             const testNotes = makeNotesArray();
+            const testFolder = makeFolderArray();
 
             beforeEach('insert notes', () => {
-                return db   
-                    .into('noteful_notes')
-                    .insert(testNotes);
+                return db
+                    .into('noteful_folder')
+                    .insert(testFolder)
+                    .then(() => {
+                        return db 
+                        .into('noteful_notes')
+                        .insert(testNotes);
+                    });
             });
 
             it('responds with 204 and removes the note', () => {
@@ -187,7 +206,7 @@ describe.only('Notes Endpoints', function(){
         });
     });
 
-    describe.only('PATCH /api/notes/:note_id', () => {
+    describe('PATCH /api/notes/:note_id', () => {
         context('Given no notes', () => {
             it('responds with 404', () => {
                 const noteId = 123456;
@@ -200,11 +219,17 @@ describe.only('Notes Endpoints', function(){
 
         context('Given there are articles in the database', () => {
             const testNotes = makeNotesArray();
+            const testFolder = makeFolderArray();
 
             beforeEach('insert notes', () => {
-                return db   
-                    .into('noteful_notes')
-                    .insert(testNotes);
+                return db
+                    .into('noteful_folder')
+                    .insert(testFolder)
+                    .then(() => {
+                        return db 
+                        .into('noteful_notes')
+                        .insert(testNotes);
+                    });
             });
 
             it('responds with 204 and updates the article', () => {
@@ -214,8 +239,8 @@ describe.only('Notes Endpoints', function(){
                     content: 'updated content'
                 };
                 const expectedNote = {
-                    ...testNotes[idToUpdate -1],
-                    ...updateNote
+                   ...testNotes[idToUpdate -1],
+                   ...updateNote
                 };
 
                 return supertest(app)
