@@ -1,3 +1,4 @@
+/* eslint-disable eqeqeq */
 /* eslint-disable indent */
 'use strict';
 
@@ -22,6 +23,14 @@ notesRouter
         const {note_name, content} = req.body;
         const newNote = {note_name, content};
         const knexInstance = req.app.get('db');
+
+        for(const [key, value] of Object.entries(newNote)){
+            if(value == null){
+                return res
+                    .status(400)
+                    .json({error: {message: `Missing '${key}' in request body`}});
+            }
+        }
     
         NotesService.insertNote(knexInstance, newNote)
             .then(note => {

@@ -5,6 +5,7 @@ const {expect} = require('chai');
 const knex = require('knex');
 const supertest = require('supertest');
 const app = require('../src/app');
+const notesRouter = require('../src/notes/notes-router');
 
 const {makeNotesArray} = require('./notes.fixtures');
 
@@ -82,7 +83,7 @@ describe.only('Notes Endpoints', function(){
         });
     });
 
-    describe('POST /notes', () => {
+    describe.only('POST /notes', () => {
         it('creates an article, responding with 201 and the new note', function(){
             this.retries(3);
 
@@ -110,6 +111,25 @@ describe.only('Notes Endpoints', function(){
                         .expect(postRes.body)
                 );
         });
+
+        const requiredFields = ['note_name', 'content'];
+
+        requiredFields.forEach(field => {
+            const newNote = {
+                note_name: 'New Note Name',
+                content: 'New Note Content'
+            };
+
+            it(`responds with 400 and an error when the ${field} is missing`, () => {
+                delete newNote[field];
+                
+                return supertest(app)
+                    .post('/notes')
+                    .send(newNote)
+                    .expect(400, {error: {message: `Missing '${field}' in request body`}});
+            });
+        });
+        
     });
 
  
