@@ -45,7 +45,7 @@ notesRouter
 
 notesRouter
     .route('/notes/:note_id')
-    .get((req,res,next) => {
+    .all((req,res,next) => {
         const knexInstance = req.app.get('db');
         const {note_id} = req.params;
 
@@ -56,12 +56,26 @@ notesRouter
                             .status(404)
                             .json({error: {message: 'Note doesn\'t exist'}});
                 }
-                res.json({
-                    id: note.id,
-                    note_name: xss(note.note_name),
-                    content: xss(note.content),
-                    date_published: note.date_published
-                });
+                res.note = note;
+                next();
+            })
+            .catch(next); 
+    })
+    .get((req,res,next) => {
+        res.json({
+            id: res.note.id,
+            note_name: xss(res.note.note_name),
+            content: xss(res.note.content),
+            date_published: res.note.date_published
+        });
+    })
+    .delete((req,res,next) => {
+        const {note_id} = req.params;
+        const knexInstance = req.app.get('db');
+
+        NotesService.deleteNote(knexInstance, note_id)
+            .then(() => {
+                res.status(204).end();
             })
             .catch(next);
     });
