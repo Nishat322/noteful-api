@@ -5,12 +5,14 @@ const { expect } = require('chai');
 const knex = require('knex');
 
 const NotesService = require('../src/notes/notes-service');
+const { makeFolderArray } = require('./folder.fixtures');
 const { makeNotesArray } = require('./notes.fixtures');
 
 
-describe('Notes Service Object', function(){
+describe.only('Notes Service Object', function(){
     let db;
     let testNotes = makeNotesArray();
+    let testFolder = makeFolderArray();
 
     before(() => {
         db = knex({
@@ -19,17 +21,22 @@ describe('Notes Service Object', function(){
         });
     });
 
-    before(() => db('noteful_notes').truncate());
+    before(() => db.raw('TRUNCATE noteful_notes, noteful_folder RESTART IDENTITY CASCADE'));
 
-    afterEach(() => db('noteful_notes').truncate());
+    afterEach(() => db.raw('TRUNCATE noteful_notes, noteful_folder RESTART IDENTITY CASCADE'));
 
     after(() => db.destroy());
 
     context('Given \'noteful_notes\' has data', () => {
         beforeEach(() => {
-            return db   
-                .into('noteful_notes')
-                .insert(testNotes);
+            return db
+                    .into('noteful_folder')
+                    .insert(testFolder)
+                    .then(() => {
+                        return db 
+                        .into('noteful_notes')
+                        .insert(testNotes);
+                    });
         });
 
         it('getAllNotes() resoves all notes from \'noteful_notes\' table', () => {
@@ -40,6 +47,7 @@ describe('Notes Service Object', function(){
                         note_name: note.note_name,
                         content: note.content,
                         date_published: new Date(note.date_published),
+                        folder_id: note.folder_id
                     })));
                 });
         });
@@ -54,7 +62,8 @@ describe('Notes Service Object', function(){
                         id: thirdId,
                         note_name: testThirdNote.note_name,
                         content: testThirdNote.content,
-                        date_published: new Date(testThirdNote.date_published)
+                        date_published: new Date(testThirdNote.date_published),
+                        folder_id: testThirdNote.folder_id
                     });
                 });
         });
@@ -94,6 +103,7 @@ describe('Notes Service Object', function(){
                 note_name: 'Updated Note Name',
                 content: 'Updated content',
                 date_published: new Date(),
+                folder_id: 2
             };
 
             return NotesService.updateNote(db, idToUpdate, newNoteData)
@@ -103,7 +113,8 @@ describe('Notes Service Object', function(){
                         id: idToUpdate,
                         note_name: newNoteData.note_name,
                         content: newNoteData.content,
-                        date_published: newNoteData.date_published
+                        date_published: newNoteData.date_published,
+                        folder_id: newNoteData.folder_id
                     });
                 });
         });
@@ -121,7 +132,8 @@ describe('Notes Service Object', function(){
             const newNote = {
                 note_name: 'Third test note',
                 content: 'Test note content',
-                date_published: new Date('1919-12-22T16:28:32.615Z')
+                date_published: new Date('1919-12-22T16:28:32.615Z'),
+                folder_id: null,
             };
 
             return NotesService.insertNote(db, newNote)
@@ -130,7 +142,8 @@ describe('Notes Service Object', function(){
                         id: 1,
                         note_name: newNote.note_name,
                         content: newNote.content,
-                        date_published: newNote.date_published
+                        date_published: newNote.date_published,
+                        folder_id: null
                     });
                 });
         });

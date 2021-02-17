@@ -9,7 +9,7 @@ const app = require('../src/app');
 const {makeNotesArray, makeMaliciousNote} = require('./notes.fixtures');
 const {makeFolderArray} = require('./folder.fixtures');
 
-describe.only('Notes Endpoints', function(){
+describe('Notes Endpoints', function(){
     let db; 
 
     before('make knex connection', () => {

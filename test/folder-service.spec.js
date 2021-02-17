@@ -5,24 +5,12 @@ const {expect} = require('chai');
 const knex = require('knex'); 
 
 const FolderService = require('../src/folder/folder-service');
+const { makeFolderArray } = require('./folder.fixtures');
 
 
 describe('Folder Service Object', function(){
     let db;
-    let testFolder = [
-        {
-            id: 1,
-            folder_name: 'First test folder'
-        },
-        {
-            id: 2,
-            folder_name: 'Second test folder'
-        },
-        {
-            id: 3,
-            folder_name: 'Third test folder'
-        }
-    ];
+    let testFolder = makeFolderArray();
 
     before(() => {
         db = knex({
@@ -31,9 +19,9 @@ describe('Folder Service Object', function(){
         });
     });
 
-    before(() => db('noteful_folder').truncate());
+    before(() => db.raw('TRUNCATE noteful_notes, noteful_folder RESTART IDENTITY CASCADE'));
 
-    afterEach(() => db('noteful_folder').truncate());
+    afterEach(() => db.raw('TRUNCATE noteful_notes, noteful_folder RESTART IDENTITY CASCADE'));
 
     after(() => db.destroy());
 
@@ -47,7 +35,11 @@ describe('Folder Service Object', function(){
         it('getAllFolders() resolves all folders from \'noteful_folders\' table', () => {
             return FolderService.getAllFolders(db)
                 .then(actual => {
-                    expect(actual).to.eql(testFolder);
+                    expect(actual).to.eql(testFolder.map(folder => ({
+                        id: folder.id,
+                        folder_name: folder.folder_name,
+                        date_created: new Date(folder.date_created)
+                    })));
                 });
         });
 
@@ -59,7 +51,8 @@ describe('Folder Service Object', function(){
                 .then(actual => {
                     expect(actual).to.eql({
                         id: 3,
-                        folder_name: testThirdFolder.folder_name
+                        folder_name: testThirdFolder.folder_name,
+                        date_created: new Date(testThirdFolder.date_created)
                     });
                 });
         });
@@ -70,29 +63,19 @@ describe('Folder Service Object', function(){
             return FolderService.deleteFolder(db, idToRemove)
                 .then(() => FolderService.getAllFolders(db))
                 .then(allFolders => {
-                    [
-                        {
-                            id: 1,
-                            folder_name: 'First test folder'
-                        },
-                        {
-                            id: 2,
-                            folder_name: 'Second test folder'
-                        },
-                        {
-                            id: 3,
-                            folder_name: 'Third test folder'
-                        }
-                    ];
                     const expected = testFolder.filter(folder => folder.id !== idToRemove);
-                    expect(allFolders).to.eql(expected);
+                    expect(allFolders).to.eql(expected.map(folder => ({
+                        ...folder,
+                        date_created: new Date(folder.date_created)
+                    })));
                 });
         });
 
         it('updateFolder() updates a folder from \'noteful_folder\'', () => {
             const idToUpdate = 3;
             const newFolderData = {
-                folder_name: 'Updated Folder Name'
+                folder_name: 'Updated Folder Name',
+                date_created: new Date()
             };
 
             return FolderService.updateFolder(db, idToUpdate, newFolderData)
@@ -100,7 +83,8 @@ describe('Folder Service Object', function(){
                 .then(folder => {
                     expect(folder).to.eql({
                         id: idToUpdate,
-                        folder_name: newFolderData.folder_name
+                        folder_name: newFolderData.folder_name,
+                        date_created: new Date(newFolderData.date_created)
                     });
                 });
         });
@@ -116,14 +100,16 @@ describe('Folder Service Object', function(){
 
         it('insertFolder() inserts a new folder and resolves the new folder with an id', () => {
             const newFolder = {
-                folder_name: 'New test folder'
+                folder_name: 'New test folder',
+                date_created: new Date()
             };
 
             return FolderService.insertFolder(db, newFolder)
                 .then(actual => {
                     expect(actual).to.eql({
                         id: 1,
-                        folder_name: newFolder.folder_name
+                        folder_name: newFolder.folder_name,
+                        date_created: newFolder.date_created
                     });
                 });
         });
