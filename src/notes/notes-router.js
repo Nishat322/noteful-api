@@ -2,9 +2,11 @@
 /* eslint-disable indent */
 'use strict';
 
+const path = require('path');
 const express = require('express');
 const xss = require('xss');
 const NotesService = require('./notes-service');
+const { json } = require('express');
 
 const notesRouter = express.Router();
 const jsonParser = express.json();
@@ -37,7 +39,7 @@ notesRouter
             .then(note => {
                 res 
                     .status(201)
-                    .location(`/notes/${note.id}`)
+                    .location(path.posix.join(req.originalUrl) + `/${note.id}`)
                     .json(note);
             })
             .catch(next);
@@ -75,6 +77,26 @@ notesRouter
 
         NotesService.deleteNote(knexInstance, note_id)
             .then(() => {
+                res.status(204).end();
+            })
+            .catch(next);
+    })
+    .patch(jsonParser, (req,res,next) => {
+        const {note_name, content} = req.body;
+        const noteToUpdate = {note_name, content};
+        const {note_id} = req.params;
+        const knexInstance = req.app.get('db');
+        
+        const numberOfValues = Object.values(noteToUpdate).filter(Boolean).length;
+
+        if(numberOfValues === 0){
+            return res      
+                    .status(400)
+                    .json({error: {message: 'Request body must contain either \'note_name\' or \'content\''}});
+        }
+        
+        NotesService.updateNote(knexInstance, note_id, noteToUpdate)
+            .then(numRowsAffected => {
                 res.status(204).end();
             })
             .catch(next);

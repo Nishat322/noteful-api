@@ -25,11 +25,11 @@ describe.only('Notes Endpoints', function(){
 
     afterEach('clean up table', () => db('noteful_notes').truncate());
 
-    describe('GET /notes', () => {
+    describe('GET /api/notes', () => {
         context('Given no notes in the database', () => {
             it('responds with 200 and an empty list', () => {
                 return supertest(app)
-                    .get('/notes')
+                    .get('/api/notes')
                     .expect(200, []);
             });
         });
@@ -45,19 +45,19 @@ describe.only('Notes Endpoints', function(){
 
             it('responds with 200 and all of the notes', () => {
                 return supertest(app)
-                    .get('/notes')
+                    .get('/api/notes')
                     .expect(200, testNotes);
             });
         });
     });
 
-    describe('GET /notes/:note_id', () => {
+    describe('GET /api/notes/:note_id', () => {
         context('Given there are not notes in the database', () => {
             it('responds with 404', () => {
                 const noteId = 123456;
 
                 return supertest(app)
-                    .get(`/notes/${noteId}`)
+                    .get(`/api/notes/${noteId}`)
                     .expect(404, {error: {message: 'Note doesn\'t exist'}});
             });
         });
@@ -71,12 +71,12 @@ describe.only('Notes Endpoints', function(){
                     .insert(testNotes);
             });
 
-            it('GET /notes/:note_id responds with 200 and the specified note', () => {
+            it('GET /api/notes/:note_id responds with 200 and the specified note', () => {
                 const noteId = 2;
                 const expectedNote = testNotes[noteId -1];
         
                 return supertest(app)
-                    .get(`/notes/${noteId}`)
+                    .get(`/api/notes/${noteId}`)
                     .expect(200, expectedNote);
             });
         });
@@ -92,7 +92,7 @@ describe.only('Notes Endpoints', function(){
 
             it('removes XSS attack content', () => {
                 return supertest(app)
-                    .get(`/notes/${maliciousNote.id}`)
+                    .get(`/api/notes/${maliciousNote.id}`)
                     .expect(200)
                     .expect(res =>{
                         expect(res.body.note_name).to.eql('Naughty naughty very naughty &lt;script&gt;alert("xss");&lt;/script&gt;');
@@ -102,7 +102,7 @@ describe.only('Notes Endpoints', function(){
         });
     });
 
-    describe('POST /notes', () => {
+    describe('POST /api/notes', () => {
         it('creates an article, responding with 201 and the new note', function(){
             this.retries(3);
 
@@ -112,21 +112,21 @@ describe.only('Notes Endpoints', function(){
             };
 
             return supertest(app)
-                .post('/notes')
+                .post('/api/notes')
                 .send(newNote)
                 .expect(201)
                 .expect(res => {
                     expect(res.body.note_name).to.eql(newNote.note_name);
                     expect(res.body.content).to.eql(newNote.content);
                     expect(res.body).to.have.property('id');
-                    expect(res.header.location).to.eql(`/notes/${res.body.id}`);
+                    expect(res.header.location).to.eql(`/api/notes/${res.body.id}`);
                     const expected = new Date().toLocaleString(); 
                     const actual = new Date(res.body.date_published).toLocaleString();
                     expect(actual).to.eql(expected);
                 })
                 .then(postRes => 
                     supertest(app)
-                        .get(`/notes/${postRes.body.id}`)
+                        .get(`/api/notes/${postRes.body.id}`)
                         .expect(postRes.body)
                 );
         });
@@ -143,7 +143,7 @@ describe.only('Notes Endpoints', function(){
                 delete newNote[field];
 
                 return supertest(app)
-                    .post('/notes')
+                    .post('/api/notes')
                     .send(newNote)
                     .expect(400, {error: {message: `Missing '${field}' in request body`}});
             });
@@ -151,7 +151,7 @@ describe.only('Notes Endpoints', function(){
         
     });
 
-    describe('DELETE /notes/:note_id', () => {
+    describe('DELETE /api/notes/:note_id', () => {
         context('Given there are notes in the database', () => {
             const testNotes = makeNotesArray();
 
@@ -166,11 +166,11 @@ describe.only('Notes Endpoints', function(){
                 const expectedtNotes = testNotes.filter(note => note.id !== idToRemove);
 
                 return supertest(app)
-                    .delete(`/notes/${idToRemove}`)
+                    .delete(`/api/notes/${idToRemove}`)
                     .expect(204)
                     .then(res => 
                         supertest(app)
-                            .get('/notes')
+                            .get('/api/notes')
                             .expect(expectedtNotes)
                     );
             });
@@ -181,11 +181,87 @@ describe.only('Notes Endpoints', function(){
                 const noteId = 123456;
 
                 return supertest(app)
-                    .delete(`/notes/${noteId}`)
+                    .delete(`/api/notes/${noteId}`)
                     .expect(404, {error: {message: 'Note doesn\'t exist'}});
             });
         });
     });
 
+    describe.only('PATCH /api/notes/:note_id', () => {
+        context('Given no notes', () => {
+            it('responds with 404', () => {
+                const noteId = 123456;
+
+                return supertest(app)
+                    .patch(`/api/notes/${noteId}`)
+                    .expect(404, {error: {message: 'Note doesn\'t exist'}});
+            });
+        });
+
+        context('Given there are articles in the database', () => {
+            const testNotes = makeNotesArray();
+
+            beforeEach('insert notes', () => {
+                return db   
+                    .into('noteful_notes')
+                    .insert(testNotes);
+            });
+
+            it('responds with 204 and updates the article', () => {
+                const idToUpdate = 3;
+                const updateNote = {
+                    note_name: 'updated note name',
+                    content: 'updated content'
+                };
+                const expectedNote = {
+                    ...testNotes[idToUpdate -1],
+                    ...updateNote
+                };
+
+                return supertest(app)
+                    .patch(`/api/notes/${idToUpdate}`)
+                    .send(updateNote)
+                    .expect(204)
+                    .then(res => 
+                        supertest(app)
+                            .get(`/api/notes/${idToUpdate}`)
+                            .expect(expectedNote)
+                    );
+            });
+
+            it('responds with 400 when no required fields supplied', () => {
+                const idToUpdate = 2;
+
+                return supertest(app)
+                    .patch(`/api/notes/${idToUpdate}`)
+                    .send({irrelevantField: 'foo'})
+                    .expect(400, {error: {message: 'Request body must contain either \'note_name\' or \'content\''}});
+            });
+
+            it('responds with 204 when updating only a subset of fields', () => {
+                const idToUpdate = 2;
+                const updateNote = {
+                    note_name: 'Updated Name'
+                };
+                const expectedNote = {
+                    ...testNotes[idToUpdate - 1],
+                    ...updateNote
+                };
+
+                return supertest(app)
+                    .patch(`/api/notes/${idToUpdate}`)
+                    .send({
+                        ...updateNote,
+                        fieldToIgnore: 'should not be in GET response'
+                    })
+                    .expect(204)
+                    .then(res =>
+                        supertest(app)
+                            .get(`/api/notes/${idToUpdate}`)
+                            .expect(expectedNote)
+                    );
+            });
+        });
+    });
  
 });

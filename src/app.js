@@ -26,7 +26,7 @@ app.get('/', (req, res) => {
     res.send('Hello, world!');
 });
 
-app.use('/', notesRouter);
+app.use('/api', notesRouter);
 app.use(errorHandler);
     
 module.exports = app;
