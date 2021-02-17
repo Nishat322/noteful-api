@@ -81,4 +81,36 @@ describe.only('Notes Endpoints', function(){
             });
         });
     });
+
+    describe('POST /notes', () => {
+        it('creates an article, responding with 201 and the new note', function(){
+            this.retries(3);
+
+            const newNote = {
+                note_name: 'New Note Name',
+                content: 'New Note Content'
+            };
+
+            return supertest(app)
+                .post('/notes')
+                .send(newNote)
+                .expect(201)
+                .expect(res => {
+                    expect(res.body.note_name).to.eql(newNote.note_name);
+                    expect(res.body.content).to.eql(newNote.content);
+                    expect(res.body).to.have.property('id');
+                    expect(res.header.location).to.eql(`/notes/${res.body.id}`);
+                    const expected = new Date().toLocaleString(); 
+                    const actual = new Date(res.body.date_published).toLocaleString();
+                    expect(actual).to.eql(expected);
+                })
+                .then(postRes => 
+                    supertest(app)
+                        .get(`/notes/${postRes.body.id}`)
+                        .expect(postRes.body)
+                );
+        });
+    });
+
+ 
 });
