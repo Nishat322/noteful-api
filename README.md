@@ -12,7 +12,7 @@ Run the tests `npm test`
 
 Run migrations `npm run migrate`
 
-Seed the database `psql -U dunder_mifflen -d noteful -f ./seeds/seed.noteful_notes.sql`
+Seed the database `psql -U postgres -d notefultwo -f ./seeds/seed.noteful_notes.sql`
 
 ## Deploying
 
