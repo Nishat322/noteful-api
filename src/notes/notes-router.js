@@ -51,7 +51,7 @@ notesRouter
                     .location(path.posix.join(req.originalUrl) + `/${note.id}`)
                     .json(note);
             })
-            .catch(next);
+            .catch(err=>console.log(err));
     });
 
 notesRouter
