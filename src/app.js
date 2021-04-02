@@ -12,7 +12,6 @@ const folderRouter = require('./folder/folder-router');
 const errorHandler = require('./errorHandler');
 
 const app = express();
-const jsonParser = express.json();
 
 const morganOption = (NODE_ENV === 'production')
   ? 'tiny'
