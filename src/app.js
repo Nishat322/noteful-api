@@ -9,7 +9,6 @@ const helmet = require('helmet');
 const { NODE_ENV } = require('./config');
 const notesRouter = require('./notes/notes-router');
 const folderRouter = require('./folder/folder-router');
-const errorHandler = require('./errorHandler');
 
 const app = express();
 
@@ -27,6 +26,18 @@ app.get('/', (req, res) => {
 
 app.use('/api', notesRouter);
 app.use('/api', folderRouter);
-app.use(errorHandler);
+
+app.use(function errorHandler(error, req, res, next) {
+  let response;
+  if (NODE_ENV === 'production') {
+    response = { error: { message: 'server error' } };
+  } else {
+    response = { message: error.message, error };
+  }
+  console.error(error);
+  res.status(500).json(response);
+});
+
+module.exports = app;
     
 module.exports = app;
